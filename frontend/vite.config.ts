@@ -6,10 +6,18 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 
 // https://vite.dev/config/
 export default defineConfig({
+  
   plugins: [
     vue(),
     vueDevTools(),
   ],
+  server: {
+    cors: true,
+      host: '0.0.0.0',
+      port: 7777,
+      strictPort: true,
+      // proxy: "",
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))

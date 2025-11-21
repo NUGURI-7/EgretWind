@@ -16,6 +16,11 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
+    "@tiptap/pm": "^3.11.0",
+    "@tiptap/starter-kit": "^3.11.0",
+    "@tiptap/vue-3": "^3.11.0",
+    "axios": "^1.13.2",
+    "element-plus": "^2.11.8",
     "pinia": "^3.0.3",
     "vue": "^3.5.22",
     "vue-router": "^4.6.3"
