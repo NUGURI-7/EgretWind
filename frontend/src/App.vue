@@ -1,7 +1,15 @@
 <script setup lang="ts"></script>
 
 <template>
-  <RouterView />
+  <div class="app">
+    <RouterView />
+  </div>
 </template>
 
-<style scoped></style>
+<style lang="scss">
+.app {
+  width: 100%;
+  min-height: 100vh;
+  background-color: #faf8f4;
+}
+</style>
