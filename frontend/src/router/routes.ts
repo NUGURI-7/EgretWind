@@ -12,4 +12,8 @@ export const routes: Array<RouteRecordRaw> = [
         path: '/tiptap',
         component: ()=> import('@/views/tiptap/tiptap.vue')
     },
+        {
+        path: '/home',
+        component: ()=> import('@/views/home-page/index.vue')
+    },
 ]
