@@ -59,13 +59,12 @@ else:
 
 INSTALLED_APPS = [
     "django.contrib.contenttypes",
-    "django.contrib.auth",
-    "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
     "user",
-    # "article",
+    "article",
+    "common",
 ]
 
 MIDDLEWARE = [
@@ -82,6 +81,13 @@ MIDDLEWARE = [
 #     # # 'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 #     # 'DEFAULT_AUTHENTICATION_CLASSES': ['common.auth.authenticate.AnonymousAuthentication']
 # }
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [],
+    'DEFAULT_PERMISSION_CLASSES': [],
+    'UNAUTHENTICATED_USER': None,
+    'UNAUTHENTICATED_TOKEN': None,
+}
 
 ROOT_URLCONF = "egretwind.urls"
 

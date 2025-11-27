@@ -8,7 +8,7 @@ import type Result from "./Result";
 
 
 const axiosConfig = {
-  baseURL: "127.0.0.1/admin/api",
+  baseURL: "127.0.0.1:8000/nuguri/api",
   withCredentials: false,
   timeout: 1800000, // 30分钟 timeout
   headers: {},
@@ -103,9 +103,9 @@ const promise: (
       })
       .finally(() => {
         if ((loading as NProgress).start) {
-          ;(loading as NProgress).done()
+          ; (loading as NProgress).done()
         } else {
-          ;(loading as Ref).value = false
+          ; (loading as Ref).value = false
         }
       }
       )
@@ -118,14 +118,14 @@ export const get: (
   params?: unknown,
   loading?: NProgress | Ref<boolean>,
   timeout?: number,
-) => Promise<Result<any>> = ( 
+) => Promise<Result<any>> = (
   url: string,
   params?: unknown,
   loading?: NProgress | Ref<boolean>,
   timeout?: number,
 ) => {
-  return promise(request({url: url, method: 'get', params, timeout: timeout}), loading)
-}
+    return promise(request({ url: url, method: 'get', params, timeout: timeout }), loading)
+  }
 
 export const post: (
   url: string,

@@ -20,5 +20,5 @@ api_prefix = 'nuguri/api/'
 
 urlpatterns = [
     path(api_prefix, include("user.urls")),
-    # path(api_prefix, include("article.urls")),
+    path(api_prefix, include("article.urls")),
 ]
