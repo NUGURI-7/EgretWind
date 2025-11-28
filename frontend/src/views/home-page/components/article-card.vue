@@ -1,261 +1,337 @@
 <template>
-    <div class="article-container">
-        <!-- 标题 -->
-        <div class="section-title">
-            <h1>最新文章</h1>
-        </div>
+  <div class="article-list-container">
+    <div class="article-grid">
+      <div v-for="article in articles" :key="article.id" class="article-card-wrapper">
+        <el-card class="article-card" shadow="hover" @click="goToDetail(article.id)">
+          <!-- 文章封面图 - 独立引用 -->
+          <div class="article-cover">
+            <img :src="getArticleCover(article.id)" :alt="article.title" @error="handleImageError" />
+          </div>
 
-        <!-- 文章列表 -->
-        <div class="article-list">
-            <div v-for="(article, index) in articles" :key="article.id" class="article-item">
-                <el-card class="article-card">
-                    <div class="article-content">
-                        <!-- 左侧：缩略图 -->
-                        <div class="article-image">
-                            <img :src="article.thumbnail" :alt="article.title" />
-                        </div>
+          <!-- 文章内容 -->
+          <div class="article-body">
+            <h2 class="article-title">{{ article.title }}</h2>
 
-                        <!-- 右侧：内容 -->
-                        <div class="article-info">
-                            <!-- 标题 -->
-                            <h2 class="article-title">{{ article.title }}</h2>
-
-                            <!-- 元数据 -->
-                            <div class="article-meta">
-                                <span class="meta-item">{{ formatDate(article.publishDate) }}</span>
-                                <span class="meta-divider">|</span>
-                                <span class="meta-item">{{ article.author }}</span>
-                                <span class="meta-divider">|</span>
-                                <span class="meta-item">
-                                    <el-icon>
-                                        <ChatDotRound />
-                                    </el-icon>
-                                    {{ article.commentCount }}
-                                </span>
-                            </div>
-
-                            <!-- 摘要 -->
-                            <p class="article-excerpt">{{ article.excerpt }}</p>
-
-                            <!-- 阅读按钮 -->
-                            <div class="article-action">
-                                <el-button type="primary" text>阅读全文 ></el-button>
-                            </div>
-                        </div>
-                    </div>
-                </el-card>
-
-                <!-- 分割线（最后一项不显示） -->
-                <el-divider v-if="index < articles.length - 1" />
+            <div class="article-meta">
+              <span class="author">
+                <i class="el-icon-user"></i>
+                {{ article.author.username }}
+              </span>
+              <span class="date" v-if="article.publishedAt">
+                <i class="el-icon-time"></i>
+                {{ formatDate(article.publishedAt) }}
+              </span>
+              <span class="status" :class="article.status">
+                {{ article.status === 'published' ? '已发布' : '草稿' }}
+              </span>
             </div>
-        </div>
 
-        <!-- 分页 -->
-        <div class="pagination-wrapper">
-            <el-pagination v-model:current-page="currentPage" :page-size="pageSize" :page-sizes="[10, 20, 30, 40]"
-                :total="total" layout="prev, pager, next" />
-        </div>
+            <p class="article-excerpt">
+              {{ getExcerpt(article.content) }}
+            </p>
+
+            <div class="article-footer">
+              <el-button type="primary" link>
+                阅读全文 →
+              </el-button>
+            </div>
+          </div>
+        </el-card>
+      </div>
     </div>
+
+    <!-- 加载状态 -->
+    <div v-if="loading" class="loading-wrapper">
+      <el-icon class="is-loading">
+        <Loading />
+      </el-icon>
+      <span>加载中...</span>
+    </div>
+
+    <!-- 空状态 -->
+    <el-empty v-if="!loading && articles.length === 0" description="暂无文章" />
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { ChatDotRound } from '@element-plus/icons-vue'
+import { onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { Loading } from '@element-plus/icons-vue'
+import type { Article } from '@/api/type/article'
+import articleApi from '@/api/article'
 
-interface Article {
-    id: number
-    title: string
-    thumbnail: string
-    author: string
-    publishDate: string
-    commentCount: number
-    excerpt: string
+const router = useRouter()
+const articles = ref<Article[]>([])
+const loading = ref(false)
+
+function getHomeArticleList() {
+  articleApi.getArticleList(undefined, loading).then((res: any) => {
+    articles.value = res.data
+  })
 }
 
-// Mock 数据
-const mockArticles: Article[] = [
-    {
-        id: 1,
-        title: '关于 Vue 3 Composition API 的深入探讨',
-        thumbnail: 'https://via.placeholder.com/200x150?text=Article+1',
-        author: 'Nuguri',
-        publishDate: '2025-01-15',
-        commentCount: 12,
-        excerpt: 'Vue 3 的 Composition API 提供了一种更灵活的代码组织方式。相比传统的 Options API，它能更好地处理复杂的逻辑复用，特别是在大型项目中...',
-    },
-    {
-        id: 2,
-        title: 'Django REST Framework 最佳实践指南',
-        thumbnail: 'https://via.placeholder.com/200x150?text=Article+2',
-        author: 'Nuguri',
-        publishDate: '2025-01-10',
-        commentCount: 5,
-        excerpt: '在构建 RESTful API 时，Django REST Framework 提供了强大的功能。本文将深入讨论序列化器、权限管理、缓存策略等核心概念...',
-    },
-    {
-        id: 3,
-        title: '数据库索引优化的思考',
-        thumbnail: 'https://via.placeholder.com/200x150?text=Article+3',
-        author: 'Nuguri',
-        publishDate: '2025-01-05',
-        commentCount: 0,
-        excerpt: '数据库索引是性能优化的关键。我们需要理解不同类型索引的工作原理，以及如何在实际项目中合理应用它们...',
-    },
-    {
-        id: 4,
-        title: 'TypeScript 类型系统深度解析',
-        thumbnail: 'https://via.placeholder.com/200x150?text=Article+4',
-        author: 'Nuguri',
-        publishDate: '2024-12-28',
-        commentCount: 8,
-        excerpt: '理解 TypeScript 的类型系统是写出高质量代码的基础。从基本类型到复杂的泛型，我们逐一探讨...',
-    },
-    {
-        id: 5,
-        title: '微服务架构中的分布式事务处理',
-        thumbnail: 'https://via.placeholder.com/200x150?text=Article+5',
-        author: 'Nuguri',
-        publishDate: '2024-12-20',
-        commentCount: 15,
-        excerpt: '在微服务架构中，分布式事务是一个复杂的问题。Saga 模式、TCC 等多种解决方案各有优劣...',
-    },
-]
+// 获取文章封面图 - 根据文章ID获取对应图片
+function getArticleCover(articleId: number) {
+  // 这里根据你的实际图片存储方式来修改
+  // 方式1: 如果有统一的图片API
+  return `/api/articles/${articleId}/cover`
 
-// 状态
-const currentPage = ref(1)
-const pageSize = ref(10)
-const total = ref(mockArticles.length)
-const articles = ref(mockArticles)
+  // 方式2: 如果图片存在固定目录
+  // return `/images/articles/${articleId}.jpg`
 
-// 工具函数
-const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('zh-CN')
+  // 方式3: 使用 unsplash 占位图
+  // return `https://source.unsplash.com/800x600/?nature,${articleId}`
 }
+
+// 格式化日期
+function formatDate(dateString: string) {
+  const date = new Date(dateString)
+  return date.toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  })
+}
+
+// 获取文章摘要
+function getExcerpt(content: string, maxLength: number = 100) {
+  if (!content) return '暂无内容'
+  const plainText = content.replace(/<[^>]*>/g, '').trim()
+  return plainText.length > maxLength
+    ? plainText.substring(0, maxLength) + '...'
+    : plainText
+}
+
+// 图片加载失败处理 - 使用SVG占位图
+function handleImageError(e: Event) {
+  const target = e.target as HTMLImageElement
+  // 使用 data URL 的 SVG 占位图
+  target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPjxzdG9wIG9mZnNldD0iMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiNjOGQ4YzQ7c3RvcC1vcGFjaXR5OjEiIC8+PHN0b3Agb2Zmc2V0PSIxMDAlIiBzdHlsZT0ic3RvcC1jb2xvcjojYjhjYmI4O3N0b3Atb3BhY2l0eToxIiAvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSI4MDAiIGhlaWdodD0iNjAwIiBmaWxsPSJ1cmwoI2cpIi8+PGNpcmNsZSBjeD0iMjAwIiBjeT0iMzAwIiByPSI4MCIgZmlsbD0iI2FhYzBhNiIgb3BhY2l0eT0iMC40Ii8+PGNpcmNsZSBjeD0iNjAwIiBjeT0iMjAwIiByPSIxMjAiIGZpbGw9IiNhYWMwYTYiIG9wYWNpdHk9IjAuMyIvPjxjaXJjbGUgY3g9IjQwMCIgY3k9IjQwMCIgcj0iNjAiIGZpbGw9IiNhYWMwYTYiIG9wYWNpdHk9IjAuNSIvPjwvc3ZnPg=='
+}
+
+// 跳转到文章详情
+function goToDetail(id: number) {
+  router.push(`/article/${id}`)
+}
+
+onMounted(() => {
+  getHomeArticleList()
+})
 </script>
 
 <style lang="scss" scoped>
-.article-container {
-    padding: 40px 0;
+.article-list-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 40px 20px;
 }
 
-.section-title {
-    margin-bottom: 30px;
-    padding-bottom: 20px;
-    border-bottom: 2px solid #f0f0f0;
-
-    h1 {
-        font-size: 28px;
-        font-weight: 600;
-        color: #16151a;
-        margin: 0;
-    }
+.article-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 28px;
 }
 
-.article-list {
-    margin-bottom: 40px;
+.article-card-wrapper {
+  animation: fadeInUp 0.5s ease-out;
 }
 
-.article-item {
-    &:not(:last-child) {
-        margin-bottom: 20px;
-    }
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .article-card {
-    border: 1px solid #f0f0f0;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    border-radius: 4px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #e8e3d8;
+  transition: all 0.3s ease;
+  background: #ffffff;
+  cursor: pointer;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 
-    :deep(.el-card__body) {
-        padding: 20px;
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(139, 125, 107, 0.12);
+    border-color: #9aaf9f;
+
+    .article-cover img {
+      transform: scale(1.05);
     }
-}
 
-.article-content {
-    display: flex;
-    gap: 30px;
-}
-
-.article-image {
-    flex-shrink: 0;
-    width: 200px;
-    height: 150px;
-    overflow: hidden;
-    border-radius: 4px;
-    background-color: #f5f5f5;
-
-    img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
+    .article-title {
+      color: #5a7c5e;
     }
-}
+  }
 
-.article-info {
-    flex: 1;
+  :deep(.el-card__body) {
+    padding: 0;
+    height: 100%;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+  }
+}
+
+.article-cover {
+  position: relative;
+  width: 100%;
+  height: 220px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #c8d8c4 0%, #b8cbb8 100%);
+  flex-shrink: 0;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+  }
+}
+
+.article-body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
 .article-title {
-    font-size: 20px;
-    font-weight: 600;
-    color: #16151a;
-    margin: 0 0 12px 0;
-    line-height: 1.4;
-
-    &:hover {
-        color: #409eff;
-        cursor: pointer;
-    }
+  font-size: 20px;
+  font-weight: 600;
+  color: #3d4a3e;
+  margin: 0 0 14px 0;
+  line-height: 1.5;
+  transition: color 0.3s ease;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .article-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 14px;
+  font-size: 13px;
+  color: #8b7d6b;
+  flex-wrap: wrap;
+
+  span {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 16px;
-    font-size: 13px;
-    color: #909399;
+    gap: 5px;
 
-    .meta-item {
-        display: flex;
-        align-items: center;
-        gap: 4px;
+    i {
+      font-size: 14px;
+    }
+  }
+
+  .status {
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+
+    &.published {
+      background: #d4e4d7;
+      color: #4a6b4e;
     }
 
-    .meta-divider {
-        color: #d9d9d9;
+    &.draft {
+      background: #f0ebe3;
+      color: #9a8872;
     }
-
-    :deep(.el-icon) {
-        font-size: 14px;
-    }
+  }
 }
 
 .article-excerpt {
+  font-size: 14px;
+  line-height: 1.7;
+  color: #6b6b6b;
+  margin: 0 0 auto 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  flex: 1;
+}
+
+.article-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 14px;
+  margin-top: 14px;
+  border-top: 1px solid #f0ebe3;
+
+  .el-button {
     font-size: 14px;
-    color: #606266;
-    line-height: 1.6;
-    margin: 0 0 16px 0;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    line-clamp: 2;
-    /* 添加标准属性 */
-    overflow: hidden;
+    color: #5a7c5e;
+    font-weight: 500;
+
+    &:hover {
+      color: #4a6b4e;
+    }
+  }
 }
 
-.article-action {
-    display: flex;
-    justify-content: flex-start;
+.loading-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 0;
+  color: #8b7d6b;
+  font-size: 15px;
+  gap: 12px;
+
+  .el-icon {
+    font-size: 28px;
+  }
 }
 
-.pagination-wrapper {
-    display: flex;
-    justify-content: center;
-    padding: 20px 0;
+// 响应式设计
+@media (max-width: 1024px) {
+  .article-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .article-list-container {
+    padding: 20px 16px;
+  }
+
+  .article-cover {
+    height: 180px;
+  }
+
+  .article-body {
+    padding: 20px;
+  }
+
+  .article-title {
+    font-size: 18px;
+  }
+
+  .article-meta {
+    font-size: 12px;
+    gap: 12px;
+  }
+
+  .article-excerpt {
+    font-size: 13px;
+  }
 }
 </style>

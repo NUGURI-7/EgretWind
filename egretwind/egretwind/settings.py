@@ -56,18 +56,24 @@ else:
     ALLOWED_HOSTS = config.get('ALLOWED_HOSTS', ['localhost', '127.0.0.1', '118.25.77.231'])
 
 # Application definition
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:7777",
+    "http://127.0.0.1:7777",
+]
 
 INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
+    'corsheaders',
     "user",
     "article",
     "common",
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",

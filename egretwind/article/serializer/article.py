@@ -13,11 +13,18 @@ from rest_framework import serializers
 from article.models import Article
 from common.database.search import page_search
 
+class UserSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    username = serializers.CharField()
 
-class ArticleSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Article
-        fields = '__all__'
+class ArticleSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    title = serializers.CharField()
+    content = serializers.CharField()
+    author = UserSerializer()
+    status = serializers.CharField()
+    published_at = serializers.DateTimeField(allow_null=True)
+
 
 
 class ArticleSerializers(serializers.Serializer):
@@ -25,11 +32,9 @@ class ArticleSerializers(serializers.Serializer):
 
     class Query(serializers.Serializer):
 
-
-
         def get_queryset(self):
             self.is_valid(raise_exception=True)
-            query_set = QuerySet(Article)
+            query_set = QuerySet(Article).select_related('author')
 
             return query_set
 
