@@ -1,3 +1,4 @@
+import AppLayout from "@/layout/AppLayout.vue";
 import type { RouteRecordRaw } from "vue-router";
 
 
@@ -5,15 +6,17 @@ import type { RouteRecordRaw } from "vue-router";
 
 export const routes: Array<RouteRecordRaw> = [
     {
-        path: '/test',
-        component: ()=> import('@/views/t1t/test.vue')
-    },
-    {
-        path: '/tiptap',
-        component: ()=> import('@/views/tiptap/tiptap.vue')
-    },
-        {
-        path: '/home',
-        component: ()=> import('@/views/home-page/index.vue')
-    },
+        path: '/',
+        component: AppLayout,
+        children: [
+            {
+                path: 'test',
+                component: ()=> import('@/views/t1t/test.vue')
+            },
+                {
+                path: 'home',
+                component: ()=> import('@/views/home-page/index.vue')
+            },
+        ]
+    }
 ]

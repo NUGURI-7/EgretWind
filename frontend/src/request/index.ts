@@ -5,6 +5,7 @@ import type { NProgress } from 'nprogress'
 import type { Ref, WritableComputedRef } from 'vue'
 import { ref } from 'vue'
 import type Result from "./Result";
+import emitter from "@/utils/bus/index"
 
 
 const axiosConfig = {
@@ -47,7 +48,12 @@ instance.interceptors.response.use(
         if (response.config.url.includes('/application/authentication')) {
           return Promise.reject(response.data)
         }
-        MsgError(response.data.message || '请求失败')
+        emitter.emit('toast:response', {
+          severity: 'error',
+          summary: '错误',
+          detail: '请求失败',
+          life: 3000
+        })
         return Promise.reject(response.data)
       }
     }
@@ -55,10 +61,20 @@ instance.interceptors.response.use(
   },
   (err: any) => {
     if (err.code === 'ECONNABORTED') {
-      MsgError('请求超时，请重试')
+        emitter.emit('toast:response', {
+          severity: 'error',
+          summary: 'error',
+          detail: '请求超时，请重试',
+          life: 3000
+        })
     } else if (!err.response) {
       // 没有响应说明网络有问题
-      MsgError('网络连接失败')
+        emitter.emit('toast:response', {
+          severity: 'error',
+          summary: '错误',
+          detail: '网络连接失败',
+          life: 3000
+        })
     } else {
       // HTTP 状态码错误
       const status = err.response.status
@@ -67,7 +83,12 @@ instance.interceptors.response.use(
         localStorage.removeItem('token')
         window.location.href = '/login'
       } else if (status === 500) {
-        MsgError('服务器错误')
+        emitter.emit('toast:response', {
+          severity: 'error',
+          summary: 'error',
+          detail: '服务器错误',
+          life: 3000
+        })
       }
     }
     return Promise.reject(err)

@@ -1,9 +1,9 @@
 <template>
-  <div class="page-wrapper">
+  <div class="w-full max-w-3xl md:max-w-4xl lg:max-w-7xl xl:max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
     <div>
       <NavBar></NavBar>
     </div>
-    <div class="page-content">
+    <div class="py-6">
       <articleCard></articleCard>
     </div>
     <!-- 这里可以加其他内容 -->
@@ -12,17 +12,5 @@
 
 <script setup lang="ts">
 import NavBar from '@/layout/nav-bar/index.vue'
-import articleCard from './components/article-card.vue';
+import articleCard from './components/article-card.vue'
 </script>
-
-<style lang="scss">
-.page-wrapper {
-  max-width: 60%;
-  margin: 0 auto;
-  width: 100%;
-}
-
-.page-content {
-  padding: 0 20px;
-}
-</style>

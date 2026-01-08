@@ -1,8 +1,10 @@
-import { ElMessageBox, ElMessage } from 'element-plus'
 
+const ElMessage = {} as any
+const ElMessageBox = {} as any
 
 export const MsgSuccess = (message: string) => {
-    ElMessage.success({
+    
+  ElMessage.success({
         message: message,
         type: 'success',
         showClose: true,
